@@ -6,6 +6,6 @@ from .models import Message
 
 
 class MessageSerializer(BaseSerializer):
-    class Meta:
+    class Meta(BaseSerializer.Meta):
         model = Message
-        fields = '__all__'
+        exclude = (*BaseSerializer.Meta.exclude,)
