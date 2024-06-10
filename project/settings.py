@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 from datetime import timedelta
 from os import environ, path
 from pathlib import Path
+import sys
 
 from dotenv import dotenv_values
 
@@ -20,9 +21,9 @@ from dotenv import dotenv_values
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-UNIT_TESTS = False
+UNIT_TESTS = 'test' in sys.argv
 
-CONFIG = {
+_config = {
     **dotenv_values('.env.shared'),
     **dotenv_values(f".env.{'test' if UNIT_TESTS else environ.get('ENVIRONMENT', default='LOCAL').lower()}"),
     **environ,
@@ -32,10 +33,10 @@ CONFIG = {
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '@v(fz0no7p4$o^da-2(x6p_lmw(3v965+k^z^*1#5rre=0+j(s'
+SECRET_KEY = 'ADD_SECRET_KEY_HERE'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = eval(_config.get('DEBUG', 'True')) or UNIT_TESTS
 
 ALLOWED_HOSTS = []
 
@@ -145,21 +146,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Custom stuff
 
-AZURE_ACCOUNT_NAME = CONFIG.get('AZURE_ACCOUNT_NAME')
-AZURE_ACCOUNT_KEY = CONFIG.get('AZURE_ACCOUNT_KEY')
-AZURE_CONTAINER = CONFIG.get('AZURE_CONTAINER')
+AZURE_ACCOUNT_NAME = _config.get('AZURE_ACCOUNT_NAME')
+AZURE_ACCOUNT_KEY = _config.get('AZURE_ACCOUNT_KEY')
+AZURE_CONTAINER = _config.get('AZURE_CONTAINER')
 AZURE_URL_EXPIRATION_SECS = 36000000
 
 AUTH_USER_MODEL = 'identity.User'
 
-CELERY_BROKER_URL = CONFIG.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = CONFIG.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_BROKER_URL = _config.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = _config.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
-
-GREMLIN_URL = 'ws://localhost:8182/gremlin'
 
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.Argon2PasswordHasher',  # Recommended for better performance
