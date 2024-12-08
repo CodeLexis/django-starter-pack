@@ -11,4 +11,3 @@ class HelloView(BaseView):
         message_serializer = MessageSerializer(message)
 
         return make_success_response(data=message_serializer.data)
-
