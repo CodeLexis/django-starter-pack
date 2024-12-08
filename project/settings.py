@@ -16,18 +16,22 @@ from pathlib import Path
 import sys
 
 from dotenv import dotenv_values
+from sentry_sdk.integrations.django import DjangoIntegration
+import sentry_sdk
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-UNIT_TESTS = 'test' in sys.argv
+IS_TESTING = 'test' in sys.argv
 
 _config = {
     **dotenv_values('.env.shared'),
-    **dotenv_values(f".env.{'test' if UNIT_TESTS else environ.get('ENVIRONMENT', default='LOCAL').lower()}"),
+    **dotenv_values(f".env.{'test' if IS_TESTING else environ.get('ENVIRONMENT', default='LOCAL').lower()}"),
     **environ,
 }
+
+ENVIRONMENT = _config.get('ENVIRONMENT')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -36,13 +40,11 @@ _config = {
 SECRET_KEY = 'ADD_SECRET_KEY_HERE'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = eval(_config.get('DEBUG', 'True')) or UNIT_TESTS
+DEBUG = eval(_config.get('DEBUG', 'True')) or IS_TESTING
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['*']
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -120,7 +122,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
@@ -132,7 +133,6 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
-
 STATIC_URL = 'static/'
 
 PROJECT_DIR = path.dirname(path.abspath(__file__))
@@ -140,12 +140,9 @@ STATIC_ROOT = path.join(PROJECT_DIR, 'static')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
 # Custom stuff
-
 AZURE_ACCOUNT_NAME = _config.get('AZURE_ACCOUNT_NAME')
 AZURE_ACCOUNT_KEY = _config.get('AZURE_ACCOUNT_KEY')
 AZURE_CONTAINER = _config.get('AZURE_CONTAINER')
@@ -160,6 +157,24 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
+handler_config = {
+    'console': {
+        'class': 'logging.StreamHandler',
+    },
+}
+
+handlers = ['console']
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': handler_config,
+    'root': {
+        'handlers': handlers,
+        'level': 'INFO',
+    },
+}
+
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.Argon2PasswordHasher',  # Recommended for better performance
 ]
@@ -169,6 +184,19 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
+
+# SENTRY
+SENTRY_DSN = _config.get('SENTRY_DSN')
+
+if ENVIRONMENT != 'LOCAL':
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+        send_default_pii=True,
+        environment=_config.get('ENVIRONMENT'),
+    )
 
 SIMPLE_JWT = {
     'USER_ID_FIELD': 'username',

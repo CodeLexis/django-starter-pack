@@ -1,11 +1,14 @@
-from http.client import CREATED, NO_CONTENT, NOT_FOUND
+from http.client import CONFLICT, CREATED, INTERNAL_SERVER_ERROR, NO_CONTENT, NOT_FOUND
 from typing import OrderedDict
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.utils import IntegrityError
+from django.http import Http404
 
 from rest_framework import views, viewsets
 from rest_framework.exceptions import APIException, ValidationError
 
+from project import logger
 from .exceptions import BaseRequestException
 from .pagination import Pagination
 from .response import make_error_response, make_success_response
@@ -53,14 +56,22 @@ class BaseView(views.APIView):
                 status=exc.status_code
             )
 
-        elif isinstance(exc, ObjectDoesNotExist):
+        elif isinstance(exc, ObjectDoesNotExist) or isinstance(exc, Http404):
             return make_error_response(
                 message='Not found',
                 status=NOT_FOUND
             )
+        
+        elif isinstance(exc, IntegrityError):
+            return make_error_response(message='Resource already exists', status=CONFLICT)
 
         else:
-            raise exc
+            logger.exception(exc) # As this could be any error, we want to log it before returning a safe error message
+
+            return make_error_response(
+                message='Something went wrong',
+                status=INTERNAL_SERVER_ERROR
+            )
 
     def get_permissions(self):
         try:
@@ -69,7 +80,7 @@ class BaseView(views.APIView):
             return [permission() for permission in self.permission_classes]
 
 
-class BaseViewSet(viewsets.ModelViewSet):
+class BaseViewSet(BaseView, viewsets.ModelViewSet):
     pagination_class = Pagination
 
     class Meta:
@@ -85,4 +96,14 @@ class BaseViewSet(viewsets.ModelViewSet):
         return make_success_response(
             data=super().destroy(request, *args, **kwargs).data,
             status=NO_CONTENT
+        )
+
+    def retrieve(self, request, *args, **kwargs):
+        return make_success_response(
+            data=super().retrieve(request, *args, **kwargs).data
+        )
+
+    def list(self, request, *args, **kwargs):
+        return make_success_response(
+            data=super().list(request, *args, **kwargs).data
         )
