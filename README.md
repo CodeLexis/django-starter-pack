@@ -81,6 +81,7 @@ A comprehensive template to kickstart your Django projects with best practices a
 - **Admin Interface**: Navigate to `/admin` to access the Django admin panel.
 - **User Authentication**: User registration and login are available at `/identity`.
 - **Static Files**: Static files are served from the `/static/` directory.
+- **Monitoring**: Sentry is wired up for this project. Set a `SENTRY_DSN` environment variable to complete the Sentry setup.
 
 ## Contributing
 
