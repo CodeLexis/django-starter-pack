@@ -77,7 +77,7 @@ A comprehensive template to kickstart your Django projects with best practices a
    The application will be accessible at `http://localhost:8000`.
 
 ## Usage
-
+- **Sample Service**: A sample service is included in `services/sample`. Clone the directory and build it out to your taste.
 - **Admin Interface**: Navigate to `/admin` to access the Django admin panel.
 - **User Authentication**: User registration and login are available at `/identity`.
 - **Static Files**: Static files are served from the `/static/` directory.
