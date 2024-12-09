@@ -1,0 +1,49 @@
+name: Backend
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches: 
+      - main
+    types: [closed]
+
+env:
+  IMAGE: codelexis.azurecr.io/{{PUT_SERVICE_NAME_HERE}}:${{ github.sha }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'GitHub checkout'
+        uses: actions/checkout@v2
+
+      - name: 'Login to Docker'
+        uses: azure/docker-login@v1
+        with:
+          login-server: codelexis.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: 'Build Docker image'
+        run: |
+          cd backend
+          docker build . -t ${{ env.IMAGE }}
+          docker push ${{ env.IMAGE }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: 'Deploy via SSH to remote server'
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /beads
+            sudo sed -i "s|image:.*|image: ${{ env.IMAGE }}|" {{PUT_BEAD_NAME_HERE}}.yml
+            docker-compose -f {{PUT_BEAD_NAME_HERE}}.yml up -d
