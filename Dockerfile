@@ -16,7 +16,6 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends dialog openssh-server redis-server \
     && echo "root:Docker!" | chpasswd \
     && chmod u+x /app/entrypoint.sh
-COPY sshd_config /etc/ssh/
 
 RUN apt install -y redis-server tini
 
