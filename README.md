@@ -58,7 +58,7 @@ A comprehensive template to kickstart your Django projects with best practices a
    python manage.py runserver
    ```
 
-   Access the application at `http://127.0.0.1:8000`. Access the test endpoint at `http://127.0.0.1:8000/sample/hello`
+   Access the application at `http://127.0.0.1:8000`. View the test endpoint at `http://127.0.0.1:8000/sample/hello`
 
 ## Docker Deployment
 
@@ -82,6 +82,7 @@ A comprehensive template to kickstart your Django projects with best practices a
 - **User Authentication**: User registration and login are available at `/identity`.
 - **Static Files**: Static files are served from the `/static/` directory.
 - **Monitoring**: Sentry is wired up for this project. Set a `SENTRY_DSN` environment variable to complete the Sentry setup.
+- **Background Tasks**: [Celery + Redis configuration](https://testdriven.io/courses/django-celery/getting-started/) is wired up to handle background tasks.
 
 ## Contributing
 
